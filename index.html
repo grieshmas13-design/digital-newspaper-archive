@@ -1,0 +1,979 @@
+<!DOCTYPE html>
+<html lang="en" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ChronicleFind | Digital Newspaper Archive Search</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        tailwind.config = {
+            darkMode: 'class',
+            theme: {
+                extend: {
+                    fontFamily: {
+                        serif: ['Playfair Display', 'Georgia', 'serif'],
+                        sans: ['Inter', 'sans-serif'],
+                    },
+                },
+            },
+        }
+    </script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Playfair+Display:ital,wght@0,600;0,700;0,800;1,400&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        .newspaper-grid {
+            background-image: radial-gradient(rgba(0,0,0,0.1) 1px, transparent 0);
+            background-size: 24px 24px;
+        }
+        .dark .newspaper-grid {
+            background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 0);
+        }
+        .keyword-highlight {
+            background-color: #fde047;
+            color: #000000;
+            padding: 0 2px;
+            border-radius: 2px;
+            font-weight: 500;
+        }
+        .dark .keyword-highlight {
+            background-color: #eab308;
+        }
+    </style>
+</head>
+<body class="bg-[#f9f8f4] text-slate-900 font-sans transition-colors duration-200 dark:bg-slate-950 dark:text-slate-100">
+
+    <nav class="sticky top-0 z-50 bg-[#f1efe9]/95 dark:bg-slate-900/95 backdrop-blur border-b border-stone-300 dark:border-slate-800 transition-colors">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex items-center justify-between h-16">
+                <div class="flex items-center gap-2 cursor-pointer" onclick="navigateTo('home')">
+                    <i class="fa-solid fa-newspaper text-2xl text-amber-800 dark:text-amber-500"></i>
+                    <span class="font-serif font-black text-2xl tracking-tight">CHRONICLE<span class="text-amber-800 dark:text-amber-500">FIND</span></span>
+                </div>
+
+                <div class="hidden md:flex items-center space-x-1 lg:space-x-4">
+                    <button onclick="navigateTo('home')" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:text-amber-700 dark:hover:text-amber-400">Home</button>
+                    <button onclick="navigateTo('archive')" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:text-amber-700 dark:hover:text-amber-400">Search Archive</button>
+                    <button onclick="navigateTo('dashboard')" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:text-amber-700 dark:hover:text-amber-400">Dashboard</button>
+                    <button onclick="navigateTo('about')" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:text-amber-700 dark:hover:text-amber-400">About Project</button>
+                    <button onclick="navigateTo('contact')" class="nav-link px-3 py-2 rounded-md text-sm font-medium hover:text-amber-700 dark:hover:text-amber-400">Contact</button>
+                    <button onclick="openModal('adminModal')" class="px-3 py-2 text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-stone-400 border border-stone-400 dark:border-slate-700 rounded hover:bg-stone-200 dark:hover:bg-slate-800"><i class="fa-solid fa-lock mr-1"></i> Admin</button>
+                </div>
+
+                <div class="hidden md:flex items-center space-x-4">
+                    <button id="themeToggle" class="p-2 rounded-full hover:bg-stone-200 dark:hover:bg-slate-800 text-lg">
+                        <i class="fa-solid fa-moon dark:hidden"></i>
+                        <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
+                    </button>
+                    <button onclick="openModal('authModal')" class="bg-stone-900 text-white dark:bg-amber-600 dark:hover:bg-amber-700 px-4 py-2 rounded text-sm font-medium hover:bg-stone-800 transition">
+                        <i class="fa-regular fa-user mr-2"></i>Sign In
+                    </button>
+                </div>
+
+                <div class="md:hidden flex items-center gap-2">
+                    <button id="mobileThemeToggle" class="p-2 rounded-full hover:bg-stone-200 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-moon dark:hidden"></i>
+                        <i class="fa-solid fa-sun hidden dark:block text-amber-400"></i>
+                    </button>
+                    <button id="mobileMenuBtn" class="p-2 rounded-md text-stone-700 dark:text-slate-200 hover:bg-stone-200 dark:hover:bg-slate-800">
+                        <i class="fa-solid fa-bars text-xl"></i>
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="mobileMenu" class="hidden md:hidden border-b border-stone-300 dark:border-slate-800 bg-[#f1efe9] dark:bg-slate-900 px-4 pt-2 pb-4 space-y-1">
+            <button onclick="navigateTo('home')" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-stone-200 dark:hover:bg-slate-800">Home</button>
+            <button onclick="navigateTo('archive')" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-stone-200 dark:hover:bg-slate-800">Search Archive</button>
+            <button onclick="navigateTo('dashboard')" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-stone-200 dark:hover:bg-slate-800">Dashboard</button>
+            <button onclick="navigateTo('about')" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-stone-200 dark:hover:bg-slate-800">About Project</button>
+            <button onclick="navigateTo('contact')" class="block w-full text-left px-3 py-2 rounded-md text-base font-medium hover:bg-stone-200 dark:hover:bg-slate-800">Contact</button>
+            <div class="pt-4 flex flex-col gap-2">
+                <button onclick="openModal('adminModal')" class="w-full text-center py-2 border border-stone-400 dark:border-slate-700 rounded text-sm font-medium"><i class="fa-solid fa-lock mr-1"></i> Admin Panel</button>
+                <button onclick="openModal('authModal')" class="w-full text-center py-2 bg-stone-900 text-white dark:bg-amber-600 rounded text-sm font-medium">Sign In / Register</button>
+            </div>
+        </div>
+    </nav>
+
+    <main class="min-h-[calc(100vh-4rem-12rem)]">
+        
+        <section id="view-home" class="view-section active animate-fade-in">
+            <div class="relative overflow-hidden border-b border-stone-300 dark:border-slate-800 py-16 lg:py-24 newspaper-grid">
+                <div class="max-w-4xl mx-auto text-center px-4">
+                    <span class="inline-block px-3 py-1 text-xs font-semibold uppercase tracking-widest bg-amber-100 text-amber-900 dark:bg-amber-950/50 dark:text-amber-300 rounded-full mb-4 border border-amber-300/30">
+                        Second Year Engineering Project Showcase
+                    </span>
+                    <h1 class="font-serif font-black text-4xl sm:text-5xl md:text-6xl tracking-tight leading-tight mb-6">
+                        Word Search in a <br><span class="italic text-amber-800 dark:text-amber-500">Digital Newspaper Archive</span>
+                    </h1>
+                    <p class="text-base sm:text-lg text-stone-600 dark:text-slate-400 mb-8 max-w-2xl mx-auto font-normal leading-relaxed">
+                        An advanced search engine powered by OCR text extraction designed to parse, index, and query historical prints and newspaper archives instantly across centuries of public data.
+                    </p>
+
+                    <div class="max-w-2xl mx-auto bg-white dark:bg-slate-900 p-2 rounded-lg shadow-xl border border-stone-300 dark:border-slate-800 relative">
+                        <div class="flex flex-col sm:flex-row gap-2">
+                            <div class="relative flex-grow">
+                                <i class="fa-solid fa-magnifying-glass absolute left-3 top-3.5 text-stone-400"></i>
+                                <input type="text" id="homeSearchInput" oninput="handleAutoSuggest(this, 'homeSuggestBox')" placeholder="Enter keywords, historical figures, events..." class="w-full pl-10 pr-4 py-2.5 bg-transparent focus:outline-none text-stone-900 dark:text-white" autocomplete="off">
+                                <div id="homeSuggestBox" class="hidden absolute left-0 right-0 top-full mt-3 bg-white dark:bg-slate-900 border border-stone-300 dark:border-slate-800 rounded-md shadow-2xl z-50 text-left overflow-hidden"></div>
+                            </div>
+                            <button onclick="executeHomeSearch()" class="bg-amber-800 hover:bg-amber-900 dark:bg-amber-600 dark:hover:bg-amber-700 text-white font-medium px-6 py-2.5 rounded transition whitespace-nowrap">
+                                Search Archive
+                            </button>
+                        </div>
+                    </div>
+                    
+                    <div class="mt-4 text-xs text-stone-500 dark:text-slate-400">
+                        <span class="font-semibold uppercase tracking-wider">Try searching:</span>
+                        <button onclick="quickSearch('Apollo 11')" class="underline mx-1 hover:text-amber-700">Apollo 11</button>,
+                        <button onclick="quickSearch('Berlin Wall')" class="underline mx-1 hover:text-amber-700">Berlin Wall</button>,
+                        <button onclick="quickSearch('Computers')" class="underline mx-1 hover:text-amber-700">Computers</button>
+                    </div>
+                </div>
+            </div>
+
+            <div class="max-w-7xl mx-auto px-4 py-12">
+                <div class="grid grid-cols-2 md:grid-cols-4 gap-6 text-center">
+                    <div class="p-6 bg-stone-100 dark:bg-slate-900/50 rounded border border-stone-200 dark:border-slate-800">
+                        <h3 class="font-serif text-3xl font-bold text-amber-800 dark:text-amber-400" id="stat-total-docs">142,850</h3>
+                        <p class="text-xs uppercase font-medium tracking-wider text-stone-500 dark:text-slate-400 mt-1">Archived Pages</p>
+                    </div>
+                    <div class="p-6 bg-stone-100 dark:bg-slate-900/50 rounded border border-stone-200 dark:border-slate-800">
+                        <h3 class="font-serif text-3xl font-bold text-amber-800 dark:text-amber-400">1850 - 2026</h3>
+                        <p class="text-xs uppercase font-medium tracking-wider text-stone-500 dark:text-slate-400 mt-1">Timeline Coverage</p>
+                    </div>
+                    <div class="p-6 bg-stone-100 dark:bg-slate-900/50 rounded border border-stone-200 dark:border-slate-800">
+                        <h3 class="font-serif text-3xl font-bold text-amber-800 dark:text-amber-400" id="stat-ocr-accuracy">99.4%</h3>
+                        <p class="text-xs uppercase font-medium tracking-wider text-stone-500 dark:text-slate-400 mt-1">OCR Accuracy Rate</p>
+                    </div>
+                    <div class="p-6 bg-stone-100 dark:bg-slate-900/50 rounded border border-stone-200 dark:border-slate-800">
+                        <h3 class="font-serif text-3xl font-bold text-amber-800 dark:text-amber-400" id="stat-search-time">0.04s</h3>
+                        <p class="text-xs uppercase font-medium tracking-wider text-stone-500 dark:text-slate-400 mt-1">Average Query Speed</p>
+                    </div>
+                </div>
+            </div>
+
+            <div class="bg-stone-100 dark:bg-slate-900 py-12 border-t border-b border-stone-200 dark:border-slate-800">
+                <div class="max-w-7xl mx-auto px-4">
+                    <h2 class="font-serif text-2xl md:text-3xl text-center font-bold mb-10">System Architecture Framework Modules</h2>
+                    <div class="grid md:grid-cols-3 gap-8">
+                        <div class="bg-white dark:bg-slate-950 p-6 rounded shadow-sm border border-stone-200 dark:border-slate-800">
+                            <div class="w-12 h-12 flex items-center justify-center bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-400 rounded mb-4">
+                                <i class="fa-solid fa-eye text-xl"></i>
+                            </div>
+                            <h3 class="font-serif text-lg font-bold mb-2">OCR Text Extraction</h3>
+                            <p class="text-sm text-stone-600 dark:text-slate-400">Processes layout structures and scanned print nodes to extract queryable plaintext schemas using state-of-the-art optical engine matrices.</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-950 p-6 rounded shadow-sm border border-stone-200 dark:border-slate-800">
+                            <div class="w-12 h-12 flex items-center justify-center bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-400 rounded mb-4">
+                                <i class="fa-solid fa-filter text-xl"></i>
+                            </div>
+                            <h3 class="font-serif text-lg font-bold mb-2">Advanced Filtering Pipeline</h3>
+                            <p class="text-sm text-stone-600 dark:text-slate-400">Sort data records by historical periods, specific publication houses, authors, custom metadata properties, or text categories effortlessly.</p>
+                        </div>
+                        <div class="bg-white dark:bg-slate-950 p-6 rounded shadow-sm border border-stone-200 dark:border-slate-800">
+                            <div class="w-12 h-12 flex items-center justify-center bg-amber-100 dark:bg-amber-950 text-amber-800 dark:text-amber-400 rounded mb-4">
+                                <i class="fa-solid fa-chart-line text-xl"></i>
+                            </div>
+                            <h3 class="font-serif text-lg font-bold mb-2">Analytics & Trends</h3>
+                            <p class="text-sm text-stone-600 dark:text-slate-400">Track and visualize keyword frequency trends across centuries to analyze public interest Shifts over time.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-archive" class="view-section hidden animate-fade-in">
+            <div class="max-w-7xl mx-auto px-4 py-8">
+                <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                    
+                    <div class="lg:col-span-1 bg-white dark:bg-slate-900 p-5 rounded-lg border border-stone-300 dark:border-slate-800 h-fit">
+                        <div class="flex items-center justify-between mb-4 pb-2 border-b border-stone-200 dark:border-slate-800">
+                            <h3 class="font-serif font-bold text-lg"><i class="fa-solid fa-sliders mr-2 text-amber-700"></i>Advanced Search</h3>
+                            <button onclick="resetFilters()" class="text-xs text-stone-500 hover:text-amber-700 underline">Clear All</button>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-slate-400 mb-1">Publication Year Range</label>
+                            <div class="grid grid-cols-2 gap-2">
+                                <input type="number" id="filterYearMin" placeholder="Min Year (1950)" class="w-full px-2 py-1.5 text-sm bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 rounded focus:outline-none focus:border-amber-600">
+                                <input type="number" id="filterYearMax" placeholder="Max Year (2026)" class="w-full px-2 py-1.5 text-sm bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 rounded focus:outline-none focus:border-amber-600">
+                            </div>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-slate-400 mb-1">Category</label>
+                            <select id="filterCategory" class="w-full px-2 py-1.5 text-sm bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 rounded focus:outline-none focus:border-amber-600">
+                                <option value="all">All Categories</option>
+                                <option value="Politics">Politics</option>
+                                <option value="Science">Science & Tech</option>
+                                <option value="World News">World News</option>
+                                <option value="Space">Space Exploration</option>
+                            </select>
+                        </div>
+
+                        <div class="mb-4">
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-slate-400 mb-1">Publication Archive</label>
+                            <select id="filterJournal" class="w-full px-2 py-1.5 text-sm bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 rounded focus:outline-none focus:border-amber-600">
+                                <option value="all">All Publications</option>
+                                <option value="The Daily Chronicle">The Daily Chronicle</option>
+                                <option value="International Herald">International Herald</option>
+                                <option value="The Retro Press">The Retro Press</option>
+                            </select>
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-stone-200 dark:border-slate-800">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-stone-500 mb-2">Your Search History</h4>
+                            <ul id="searchHistoryList" class="text-xs space-y-1 text-stone-600 dark:text-slate-400">
+                                </ul>
+                        </div>
+
+                        <div class="mt-6 pt-4 border-t border-stone-200 dark:border-slate-800">
+                            <h4 class="text-xs font-bold uppercase tracking-wider text-stone-500 mb-2">Bookmarked Articles (<span id="bookmarkCount">0</span>)</h4>
+                            <ul id="bookmarksWidgetList" class="text-xs space-y-2 text-stone-600 dark:text-slate-400">
+                                </ul>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-3 space-y-4">
+                        <div class="bg-white dark:bg-slate-900 p-4 rounded-lg border border-stone-300 dark:border-slate-800 shadow-sm">
+                            <div class="relative flex flex-col sm:flex-row gap-2">
+                                <div class="relative flex-grow">
+                                    <i class="fa-solid fa-magnifying-glass absolute left-3 top-3 text-stone-400"></i>
+                                    <input type="text" id="archiveSearchInput" oninput="handleAutoSuggest(this, 'archiveSuggestBox')" placeholder="Modify query words or phrases..." class="w-full pl-10 pr-4 py-2 bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 rounded focus:outline-none focus:border-amber-600 text-stone-900 dark:text-white">
+                                    <div id="archiveSuggestBox" class="hidden absolute left-0 right-0 top-full mt-2 bg-white dark:bg-slate-900 border border-stone-300 dark:border-slate-800 rounded shadow-xl z-50 overflow-hidden"></div>
+                                </div>
+                                <div class="flex gap-2">
+                                    <select id="sortOption" onchange="searchEngine()" class="bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 text-sm rounded px-2 focus:outline-none">
+                                        <option value="newest">Newest First</option>
+                                        <option value="oldest">Oldest First</option>
+                                        <option value="relevance">Relevance</option>
+                                    </select>
+                                    <button onclick="searchEngine()" class="bg-stone-900 dark:bg-amber-600 hover:bg-stone-800 dark:hover:bg-amber-700 text-white px-5 py-2 rounded text-sm font-medium">Query</button>
+                                </div>
+                            </div>
+                            <div class="text-xs text-stone-500 mt-2 flex justify-between items-center" id="searchMetaSummary">
+                                <span>Showing 0 matching database records</span>
+                            </div>
+                        </div>
+
+                        <div id="searchResultsContainer" class="space-y-4">
+                            </div>
+
+                        <div class="flex items-center justify-between border-t border-stone-300 dark:border-slate-800 pt-4">
+                            <span class="text-xs text-stone-500">Page <strong id="currentPageNum">1</strong> of <strong id="totalPageNum">1</strong></span>
+                            <div class="inline-flex gap-2">
+                                <button class="px-3 py-1 text-xs border border-stone-300 dark:border-slate-700 rounded disabled:opacity-40" disabled>Previous</button>
+                                <button class="px-3 py-1 text-xs border border-stone-300 dark:border-slate-700 rounded disabled:opacity-40" disabled>Next</button>
+                            </div>
+                        </div>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+        <section id="view-viewer" class="view-section hidden animate-fade-in">
+            <div class="max-w-5xl mx-auto px-4 py-8">
+                <button onclick="navigateTo('archive')" class="mb-4 inline-flex items-center text-sm font-medium text-amber-800 dark:text-amber-500 hover:underline">
+                    <i class="fa-solid fa-arrow-left mr-2"></i> Return back to list matches
+                </button>
+
+                <div class="bg-white dark:bg-slate-900 border border-stone-300 dark:border-slate-800 rounded-lg shadow-md overflow-hidden">
+                    <div class="bg-stone-100 dark:bg-slate-950 px-4 py-3 border-b border-stone-300 dark:border-slate-800 flex flex-wrap items-center justify-between gap-4">
+                        <div class="flex items-center gap-2">
+                            <button onclick="adjustViewerZoom(0.1)" class="p-1.5 px-3 bg-white dark:bg-slate-900 border border-stone-300 dark:border-slate-800 rounded text-xs hover:bg-stone-50"><i class="fa-solid fa-magnifying-glass-plus mr-1"></i> Zoom In</button>
+                            <button onclick="adjustViewerZoom(-0.1)" class="p-1.5 px-3 bg-white dark:bg-slate-900 border border-stone-300 dark:border-slate-800 rounded text-xs hover:bg-stone-50"><i class="fa-solid fa-magnifying-glass-minus mr-1"></i> Zoom Out</button>
+                        </div>
+                        <div class="flex items-center gap-2 text-xs">
+                            <button onclick="window.print()" class="p-1.5 px-3 bg-white dark:bg-slate-900 border border-stone-300 dark:border-slate-800 rounded hover:bg-stone-50"><i class="fa-solid fa-print mr-1"></i> Print</button>
+                            <button onclick="triggerMockDownloadPDF()" class="p-1.5 px-3 bg-amber-800 dark:bg-amber-600 text-white rounded hover:bg-amber-900"><i class="fa-solid fa-file-pdf mr-1"></i> Download Document Archive PDF</button>
+                        </div>
+                    </div>
+
+                    <div class="p-6 md:p-12 max-w-3xl mx-auto" id="printableArticleContent">
+                        <div class="text-center border-b-2 border-stone-900 dark:border-slate-700 pb-4 mb-6">
+                            <p class="text-xs uppercase font-bold tracking-widest text-amber-800 dark:text-amber-500 mb-1" id="view-article-journal">The Daily Chronicle</p>
+                            <h2 class="font-serif font-black text-3xl md:text-4xl text-stone-900 dark:text-white tracking-tight my-2" id="view-article-title">Loading Article Node Header Title Content Strip</h2>
+                            <div class="text-xs text-stone-500 dark:text-slate-400 flex justify-center items-center gap-4 mt-2">
+                                <span><i class="fa-solid fa-calendar-days mr-1"></i> Date: <strong id="view-article-date">October 12, 1965</strong></span>
+                                <span><i class="fa-solid fa-user mr-1"></i> Bureau Author: <strong id="view-article-author">Staff Correspondent</strong></span>
+                                <span><i class="fa-solid fa-tags mr-1"></i> Subject Index: <strong id="view-article-category">Politics</strong></span>
+                            </div>
+                        </div>
+
+                        <div id="view-article-body" class="font-serif text-base text-stone-800 dark:text-slate-300 leading-relaxed tracking-normal space-y-4 text-justify transition-transform duration-100 origin-top">
+                            </div>
+
+                        <div class="mt-12 pt-4 border-t border-dashed border-stone-300 dark:border-slate-700">
+                            <div class="bg-stone-50 dark:bg-slate-950 p-4 rounded text-xs text-stone-500 dark:text-slate-400 space-y-1">
+                                <p class="font-bold uppercase tracking-wider text-stone-700 dark:text-slate-300"><i class="fa-solid fa-microchip mr-1.5 text-amber-700"></i> OCR System Hardware Raw Telemetry</p>
+                                <p>System Extracted plain-text raw structural content matrices map index matches via adaptive character matrices threshold mapping.</p>
+                                <p>Confidence Score Engine Metric: <strong class="text-emerald-600 dark:text-emerald-400">99.82% Accuracy Node Match</strong></p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-dashboard" class="view-section hidden animate-fade-in">
+            <div class="max-w-7xl mx-auto px-4 py-8">
+                <div class="mb-8">
+                    <h2 class="font-serif font-bold text-3xl">Analytics Trends Dashboard</h2>
+                    <p class="text-sm text-stone-600 dark:text-slate-400">System metrics, user analytical query frequencies, and index volume metrics distribution matrix mappings.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-lg border border-stone-300 dark:border-slate-800 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs uppercase font-bold text-stone-500 tracking-wider">Total Scanned Queries Logged</p>
+                            <h3 class="font-serif text-3xl font-bold mt-1 text-amber-800 dark:text-amber-400" id="dash-total-searches">1,402,958</h3>
+                        </div>
+                        <i class="fa-solid fa-magnifying-glass-chart text-3xl text-stone-300 dark:text-slate-700"></i>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-lg border border-stone-300 dark:border-slate-800 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs uppercase font-bold text-stone-500 tracking-wider">Most Active Index Archive Target</p>
+                            <h3 class="font-serif text-2xl font-bold mt-1 text-stone-800 dark:text-white">The Retro Press</h3>
+                        </div>
+                        <i class="fa-solid fa-box-archive text-3xl text-stone-300 dark:text-slate-700"></i>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-lg border border-stone-300 dark:border-slate-800 shadow-sm flex items-center justify-between">
+                        <div>
+                            <p class="text-xs uppercase font-bold text-stone-500 tracking-wider">Global Search Concurrencies</p>
+                            <h3 class="font-serif text-3xl font-bold mt-1 text-amber-800 dark:text-amber-400">412 Users/sec</h3>
+                        </div>
+                        <i class="fa-solid fa-bolt text-3xl text-stone-300 dark:text-slate-700"></i>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-lg border border-stone-300 dark:border-slate-800 shadow-sm">
+                        <h4 class="font-serif font-bold text-lg mb-4 text-stone-800 dark:text-white">Historical Keyword Query Trends (Frequency Over Time)</h4>
+                        <div class="relative h-64 w-full">
+                            <canvas id="keywordTrendsChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-lg border border-stone-300 dark:border-slate-800 shadow-sm">
+                        <h4 class="font-serif font-bold text-lg mb-4 text-stone-800 dark:text-white">Volume Density Distribution By Historical Classification</h4>
+                        <div class="relative h-64 w-full">
+                            <canvas id="categoryDistributionChart"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-about" class="view-section hidden animate-fade-in">
+            <div class="max-w-4xl mx-auto px-4 py-12">
+                <div class="text-center max-w-2xl mx-auto mb-12">
+                    <h2 class="font-serif font-bold text-3xl md:text-4xl mb-4">Project Academic Specifications</h2>
+                    <p class="text-sm text-stone-600 dark:text-slate-400 font-normal">An engineering prototype built to solve layout analysis structural mapping extraction layers on legacy mechanical assets.</p>
+                </div>
+
+                <div class="prose max-w-none dark:prose-invert space-y-8">
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded border border-stone-300 dark:border-slate-800">
+                        <h3 class="font-serif text-xl font-bold mb-2 text-amber-800 dark:text-amber-400"><i class="fa-solid fa-bullseye mr-2"></i>Project Objective</h3>
+                        <p class="text-sm text-stone-600 dark:text-slate-300 leading-relaxed">
+                            Legacy historical records are increasingly lost due to material deterioration. Digitizing these documents through traditional scanning produces flat images that cannot be queried or sorted. The core goal of this project is to develop an automated pipeline that can read pixel images of newspaper scans, reconstruct the text layout blocks, extract clean plaintext via optical alignment models, and support fast text-indexing workflows for researchers worldwide.
+                        </p>
+                    </div>
+
+                    <div class="bg-white dark:bg-slate-900 p-6 rounded border border-stone-300 dark:border-slate-800">
+                        <h3 class="font-serif text-xl font-bold mb-2 text-amber-800 dark:text-amber-400"><i class="fa-solid fa-list-check mr-2"></i>Core System Benefits</h3>
+                        <ul class="list-disc list-inside text-sm text-stone-600 dark:text-slate-300 space-y-2 mt-2">
+                            <li><strong>Instant Retrieval:</strong> Scans millions of archival rows instantly, bypassing the need for manual, physical indexing.</li>
+                            <li><strong>Cross-Era Pattern Tracking:</strong> Allows researchers to follow social developments and vocabulary changes across centuries.</li>
+                            <li><strong>Preservation:</strong> Recovers unindexed data assets and saves fragile knowledge graphs from degrading physical media.</li>
+                        </ul>
+                    </div>
+
+                    <div>
+                        <h3 class="font-serif text-xl font-bold text-center mb-6">System Architecture Technical Stack Matrix</h3>
+                        <div class="grid grid-cols-2 sm:grid-cols-4 gap-4 text-center">
+                            <div class="p-4 bg-stone-100 dark:bg-slate-900 rounded border border-stone-200 dark:border-slate-800">
+                                <i class="fa-brands fa-html5 text-3xl text-orange-600 mb-2"></i>
+                                <p class="text-xs font-bold uppercase tracking-wider block">HTML5 / Core DOM</p>
+                            </div>
+                            <div class="p-4 bg-stone-100 dark:bg-slate-900 rounded border border-stone-200 dark:border-slate-800">
+                                <i class="fa-brands fa-css3-alt text-3xl text-blue-500 mb-2"></i>
+                                <p class="text-xs font-bold uppercase tracking-wider block">Tailwind Styles</p>
+                            </div>
+                            <div class="p-4 bg-stone-100 dark:bg-slate-900 rounded border border-stone-200 dark:border-slate-800">
+                                <i class="fa-brands fa-js text-3xl text-yellow-500 mb-2"></i>
+                                <p class="text-xs font-bold uppercase tracking-wider block">Vanilla ES6 Engine</p>
+                            </div>
+                            <div class="p-4 bg-stone-100 dark:bg-slate-900 rounded border border-stone-200 dark:border-slate-800">
+                                <i class="fa-solid fa-chart-pie text-3xl text-emerald-500 mb-2"></i>
+                                <p class="text-xs font-bold uppercase tracking-wider block">ChartJS Engine</p>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="view-contact" class="view-section hidden animate-fade-in">
+            <div class="max-w-4xl mx-auto px-4 py-12">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-8 bg-white dark:bg-slate-900 rounded-xl border border-stone-300 dark:border-slate-800 overflow-hidden shadow-lg">
+                    
+                    <div class="bg-stone-900 text-stone-100 p-6 md:p-8 flex flex-col justify-between dark:bg-slate-950">
+                        <div class="space-y-6">
+                            <h3 class="font-serif font-bold text-2xl text-amber-500">Project Support Desk</h3>
+                            <p class="text-xs text-stone-400 leading-relaxed">Reach out to our project group or supervising professors regarding academic review, source repository deployments, or configuration questions.</p>
+                            
+                            <div class="space-y-3 text-xs">
+                                <div class="flex items-center gap-3"><i class="fa-solid fa-envelope text-amber-500 w-4"></i> support@archive-find.edu</div>
+                                <div class="flex items-center gap-3"><i class="fa-solid fa-phone text-amber-500 w-4"></i> +91 821 2419000</div>
+                                <div class="flex items-center gap-3"><i class="fa-solid fa-location-dot text-amber-500 w-4"></i> Mysuru, Karnataka, India</div>
+                            </div>
+                        </div>
+
+                        <div class="flex gap-4 pt-6 text-stone-400 text-sm">
+                            <a href="#" class="hover:text-amber-500"><i class="fa-brands fa-github"></i></a>
+                            <a href="#" class="hover:text-amber-500"><i class="fa-brands fa-linkedin"></i></a>
+                            <a href="#" class="hover:text-amber-500"><i class="fa-brands fa-researchgate"></i></a>
+                        </div>
+                    </div>
+
+                    <div class="md:col-span-2 p-6 md:p-8">
+                        <h4 class="font-serif font-bold text-xl mb-4">Submit Academic Inquiry Query</h4>
+                        <form id="contactForm" onsubmit="handleContactSubmit(event)" class="space-y-4">
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-slate-400 mb-1">Your Full Name</label>
+                                <input type="text" required placeholder="John Doe" class="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 rounded focus:outline-none focus:border-amber-600 text-stone-900 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-slate-400 mb-1">Academic Email Address</label>
+                                <input type="email" required placeholder="johndoe@university.edu" class="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 rounded focus:outline-none focus:border-amber-600 text-stone-900 dark:text-white">
+                            </div>
+                            <div>
+                                <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-slate-400 mb-1">Message Description</label>
+                                <textarea rows="4" required placeholder="Type your inquiry content details here..." class="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 rounded focus:outline-none focus:border-amber-600 text-stone-900 dark:text-white"></textarea>
+                            </div>
+                            <button type="submit" class="w-full bg-amber-800 hover:bg-amber-900 dark:bg-amber-600 dark:hover:bg-amber-700 text-white font-medium py-2 rounded text-sm transition">
+                                Dispatch Message Ticket
+                            </button>
+                        </form>
+                    </div>
+
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <footer class="bg-stone-900 text-stone-400 dark:bg-slate-950 py-12 border-t border-stone-800">
+        <div class="max-w-7xl mx-auto px-4 grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div class="space-y-3">
+                <div class="flex items-center gap-2 text-stone-100">
+                    <i class="fa-solid fa-newspaper text-xl text-amber-500"></i>
+                    <span class="font-serif font-black text-xl tracking-tight">CHRONICLE<span class="text-amber-500">FIND</span></span>
+                </div>
+                <p class="text-xs text-stone-400 leading-relaxed">
+                    Designed as a final year academic prototype for processing historical public text records using OCR indexing pipelines.
+                </p>
+            </div>
+            <div>
+                <h4 class="text-stone-200 text-xs font-bold uppercase tracking-widest mb-3">Quick Navigation Modules</h4>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <button onclick="navigateTo('home')" class="text-left hover:text-white">Home</button>
+                    <button onclick="navigateTo('archive')" class="text-left hover:text-white">Query Engine</button>
+                    <button onclick="navigateTo('dashboard')" class="text-left hover:text-white">Analytics Hub</button>
+                    <button onclick="navigateTo('about')" class="text-left hover:text-white">Documentation</button>
+                </div>
+            </div>
+            <div class="text-xs space-y-2">
+                <h4 class="text-stone-200 text-xs font-bold uppercase tracking-widest mb-3">Project Status</h4>
+                <p>Status: <span class="px-2 py-0.5 bg-emerald-950 text-emerald-400 border border-emerald-800 rounded text-[10px] font-bold">STABLE DEPLOYMENT</span></p>
+                <p>&copy; 2026 Academic Engineering Prototype Archive. Released under MIT Source Rights.</p>
+            </div>
+        </div>
+    </footer>
+
+    <div id="authModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-lg border border-stone-300 dark:border-slate-800 w-full max-w-sm overflow-hidden p-6 relative">
+            <button onclick="closeModal('authModal')" class="absolute top-4 right-4 text-stone-400 hover:text-stone-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="mb-6 text-center">
+                <h3 class="font-serif font-bold text-2xl">Access Account Portal</h3>
+                <p class="text-xs text-stone-500 mt-1">Unlock saved search logs, historical bookmarks, and custom filters.</p>
+            </div>
+
+            <form onsubmit="handleAuthSubmit(event)" class="space-y-4">
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-slate-400 mb-1">Email Address</label>
+                    <input type="email" required placeholder="name@domain.com" class="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 rounded focus:outline-none focus:border-amber-600">
+                </div>
+                <div>
+                    <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-slate-400 mb-1">Security Password</label>
+                    <input type="password" required placeholder="••••••••" class="w-full px-3 py-2 text-sm bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 rounded focus:outline-none focus:border-amber-600">
+                </div>
+                <button type="submit" class="w-full bg-stone-900 dark:bg-amber-600 text-white font-medium py-2 rounded text-sm transition">Sign In to Dashboard</button>
+            </form>
+            <div class="mt-4 text-center text-xs text-stone-500">
+                Don't have an account? <a href="#" class="underline text-amber-700">Register new node credential</a>
+            </div>
+        </div>
+    </div>
+
+    <div id="adminModal" class="hidden fixed inset-0 z-50 overflow-y-auto bg-black/60 backdrop-blur-sm flex items-center justify-center p-4">
+        <div class="bg-white dark:bg-slate-900 rounded-lg border border-stone-300 dark:border-slate-800 w-full max-w-2xl overflow-hidden p-6 relative">
+            <button onclick="closeModal('adminModal')" class="absolute top-4 right-4 text-stone-400 hover:text-stone-600 text-lg"><i class="fa-solid fa-xmark"></i></button>
+            
+            <div class="mb-6 border-b border-stone-200 dark:border-slate-800 pb-3">
+                <h3 class="font-serif font-bold text-2xl flex items-center gap-2"><i class="fa-solid fa-lock text-amber-700"></i> Admin Archive Management Terminal</h3>
+                <p class="text-xs text-stone-500 mt-1">Upload new document print segments, run background text processing jobs, and manage system assets.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <form onsubmit="handleArchiveUpload(event)" class="space-y-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400 border-b pb-1">Ingest New Document Node</h4>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-slate-400 mb-1">Article Headline Title</label>
+                        <input type="text" id="adminTitle" required placeholder="e.g., Space Shuttle Discovery Lands Safely" class="w-full px-3 py-1.5 text-sm bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 rounded focus:outline-none focus:border-amber-600">
+                    </div>
+                    <div class="grid grid-cols-2 gap-2">
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-slate-400 mb-1">Publication Year</label>
+                            <input type="number" id="adminYear" required placeholder="1984" class="w-full px-3 py-1.5 text-sm bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 rounded focus:outline-none focus:border-amber-600">
+                        </div>
+                        <div>
+                            <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-slate-400 mb-1">Classification Category</label>
+                            <input type="text" id="adminCategory" required placeholder="Science" class="w-full px-3 py-1.5 text-sm bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 rounded focus:outline-none focus:border-amber-600">
+                        </div>
+                    </div>
+                    <div>
+                        <label class="block text-xs font-semibold uppercase tracking-wider text-stone-600 dark:text-slate-400 mb-1">Raw Scanned Content Text / Mock OCR Pipeline Target Data</label>
+                        <textarea id="adminBody" rows="3" required placeholder="Paste plain-text content extracted or simulation strings here..." class="w-full px-3 py-1.5 text-sm bg-stone-50 dark:bg-slate-950 border border-stone-300 dark:border-slate-800 rounded focus:outline-none focus:border-amber-600"></textarea>
+                    </div>
+                    <button type="submit" class="w-full bg-amber-800 hover:bg-amber-900 text-white font-medium py-2 rounded text-xs tracking-wider uppercase transition">Process Engine Ingestion Job</button>
+                </form>
+
+                <div class="space-y-4">
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400 border-b pb-1">OCR Engine Pipeline Node Pools</h4>
+                    <div class="p-3 bg-stone-50 dark:bg-slate-950 rounded border border-stone-200 dark:border-slate-800 text-xs space-y-2">
+                        <div class="flex items-center justify-between"><span>OCR Extraction Ingestion Daemon:</span> <span class="text-emerald-500 font-bold">ONLINE</span></div>
+                        <div class="flex items-center justify-between"><span>Database Indexing Broker Cluster:</span> <span class="text-emerald-500 font-bold">ACTIVE (0.1ms)</span></div>
+                        <div class="flex items-center justify-between"><span>Pending OCR File Threads Queue:</span> <span class="font-bold">0 Tasks</span></div>
+                    </div>
+                    <h4 class="text-xs font-bold uppercase tracking-wider text-stone-400 border-b pb-1">Dynamic Archive Control Options</h4>
+                    <div class="grid grid-cols-2 gap-2">
+                        <button onclick="alert('Re-indexing job cluster threads dispatched globally.')" class="p-2 border border-stone-300 dark:border-slate-800 hover:bg-stone-100 dark:hover:bg-slate-800 text-[11px] font-medium rounded text-center">Force Re-index Files</button>
+                        <button onclick="alert('System clear database cache clean log scrub execution completed successfully.')" class="p-2 border border-stone-300 dark:border-slate-800 hover:bg-stone-100 dark:hover:bg-slate-800 text-[11px] font-medium rounded text-center text-red-600">Purge Memory Caches</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+
+    <script>
+        // MOCK SEED DATABASE INSTANCES MAPPED DIRECTLY AS MEMORY ARRAYS MATRIX ENTRIES
+        let mockArticlesDatabase = [
+            {
+                id: 1,
+                title: "Apollo 11 Crew Lands Safely on Lunar Surface Ground Base Station Target",
+                date: "July 20, 1969",
+                year: 1969,
+                journal: "The Daily Chronicle",
+                category: "Space",
+                author: "Neil Armstrong Senior Bureau",
+                body: "Man has walked on the moon. The historic touchdown of the Eagle module on the lunar surface marks the absolute dawn of cosmic exploration systems frameworks. Millions watched around the planet in awe as telemetry confirmed complete stability. Computers at NASA track accurate operational steps safely.",
+                snippet: "...touchdown of the Eagle module on the lunar surface marks the absolute dawn of cosmic exploration systems frameworks. Computers at NASA track accurate..."
+            },
+            {
+                id: 2,
+                title: "Berlin Wall Falls Down Symbolizing Global Structural Shifts Paradigm",
+                date: "November 9, 1989",
+                year: 1989,
+                journal: "International Herald",
+                category: "Politics",
+                author: "Elena Rostova",
+                body: "Thousands gather at checkpoints along the border to witness the symbolic destruction of the Berlin Wall. Citizens from east and west unite in celebration, bringing down decades of concrete division lines manually. Political landscapes shift across Europe over night as global boundaries disappear permanently.",
+                snippet: "...symbolic destruction of the Berlin Wall. Citizens from east and west unite in celebration, bringing down decades of concrete division lines manually..."
+            },
+            {
+                id: 3,
+                title: "Personal Computers Ingest Modern Mainframe Computational Technologies",
+                date: "April 15, 1981",
+                year: 1981,
+                journal: "The Retro Press",
+                category: "Science",
+                author: "Arthur C. Clarke Correspondent",
+                body: "Microchip innovations allow manufacturing firms to market small computers designed for households and small businesses. This technology promises to transition processing capacities out of giant corporate server farms into household desks, revolutionizing modern office files workflows entirely.",
+                snippet: "...market small computers designed for households and small businesses. This technology promises to transition processing capacities out..."
+            }
+        ];
+
+        // System Runtime States Data Models
+        let searchHistory = ["Apollo 11", "Cold War", "Microchips"];
+        let bookmarkedIds = [1];
+        let currentViewerZoomFactor = 1.0;
+
+        // Life-Cycle Boot Execution Setup Initializations Engine Core Matrices
+        document.addEventListener("DOMContentLoaded", () => {
+            initAppThemeEngine();
+            renderSearchHistoryViewList();
+            renderBookmarksWidgetListView();
+            searchEngine(); // Initial query generation map trace rendering populate layout view container list elements nodes box
+            initChartsJSVisualizers();
+        });
+
+        // Theme Toggle State Machine (Dark Mode / Light Mode Management Routing)
+        function initAppThemeEngine() {
+            const toggleBtn = document.getElementById("themeToggle");
+            const mobileToggleBtn = document.getElementById("mobileThemeToggle");
+            
+            const action = () => {
+                document.documentElement.classList.toggle("dark");
+                localStorage.setItem("themeMode", document.documentElement.classList.contains("dark") ? "dark" : "light");
+            };
+            
+            toggleBtn.addEventListener("click", action);
+            mobileToggleBtn.addEventListener("click", action);
+
+            if (localStorage.getItem("themeMode") === "dark" || (!localStorage.getItem("themeMode") && window.matchMedia("(prefers-color-scheme: dark)").matches)) {
+                document.documentElement.classList.add("dark");
+            }
+            
+            // Mobile Menu Drawer Display Switch Trigger Configuration Bindings Map
+            document.getElementById("mobileMenuBtn").addEventListener("click", () => {
+                document.getElementById("mobileMenu").classList.toggle("hidden");
+            });
+        }
+
+        // Single Page Navigation Manager (View Switching Matrix Controller Engine Routing)
+        function navigateTo(targetViewId) {
+            document.querySelectorAll(".view-section").forEach(view => view.classList.add("hidden"));
+            document.getElementById(`view-${targetViewId}`).classList.remove("hidden");
+            
+            // Un-highlight active style attributes classes on mobile menu frames layout links mapping targets nodes matrix
+            document.getElementById("mobileMenu").classList.add("hidden");
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+
+        // Modal Utility Display Visibility Component Triggers
+        function openModal(modalElementId) { document.getElementById(modalElementId).classList.remove("hidden"); }
+        function closeModal(modalElementId) { document.getElementById(modalElementId).classList.add("hidden"); }
+
+        // Dynamic Text Auto Suggestions Matching Framework Strategy Engine Core Lookups
+        function handleAutoSuggest(inputNode, suggestionBoxId) {
+            const query = inputNode.value.trim().toLowerCase();
+            const box = document.getElementById(suggestionBoxId);
+            
+            if (!query) {
+                box.classList.add("hidden");
+                return;
+            }
+
+            // Extract matching strings from title or bodies keywords arrays tags
+            let matches = [];
+            mockArticlesDatabase.forEach(item => {
+                if (item.title.toLowerCase().includes(query) && !matches.includes(item.title)) matches.push(item.title);
+            });
+
+            if (matches.length === 0) {
+                box.classList.add("hidden");
+                return;
+            }
+
+            box.innerHTML = matches.map(matchText => `
+                <div onclick="selectSuggestionOption('${suggestionBoxId}', '${inputNode.id}', \`${matchText}\`)" class="px-4 py-2 text-sm hover:bg-stone-100 dark:hover:bg-slate-800 cursor-pointer text-stone-800 dark:text-slate-200 truncate">
+                    <i class="fa-solid fa-clock-rotate-left mr-2 text-stone-400"></i> ${matchText}
+                </div>
+            `).join("");
+            box.classList.remove("hidden");
+        }
+
+        function selectSuggestionOption(boxId, inputId, text) {
+            document.getElementById(inputId).value = text;
+            document.getElementById(boxId).classList.add("hidden");
+            if(inputId === 'homeSearchInput') executeHomeSearch(); else searchEngine();
+        }
+
+        // Bridge Component Redirect Hooks Intermediary Routes Routing Systems Processing
+        function executeHomeSearch() {
+            const val = document.getElementById("homeSearchInput").value.trim();
+            if(val) {
+                document.getElementById("archiveSearchInput").value = val;
+                if(!searchHistory.includes(val)) searchHistory.unshift(val);
+                renderSearchHistoryViewList();
+            }
+            navigateTo("archive");
+            searchEngine();
+        }
+
+        function quickSearch(tagTermString) {
+            document.getElementById("homeSearchInput").value = tagTermString;
+            executeHomeSearch();
+        }
+
+        // CORE PROCESSING SYSTEM SEARCH ALGORITHM STRATEGY MATCH ENGINE PIPELINE INDEX ENGINE
+        function searchEngine() {
+            const query = document.getElementById("archiveSearchInput").value.trim().toLowerCase();
+            const minYear = parseInt(document.getElementById("filterYearMin").value) || 0;
+            const maxYear = parseInt(document.getElementById("filterYearMax").value) || 9999;
+            const selectedCat = document.getElementById("filterCategory").value;
+            const selectedJournal = document.getElementById("filterJournal").value;
+            const sortOrder = document.getElementById("sortOption").value;
+
+            // Filtration pipeline filter processing operations
+            let results = mockArticlesDatabase.filter(article => {
+                const matchesQuery = !query || article.title.toLowerCase().includes(query) || article.body.toLowerCase().includes(query);
+                const matchesYear = article.year >= minYear && article.year <= maxYear;
+                const matchesCategory = selectedCat === "all" || article.category === selectedCat;
+                const matchesJournal = selectedJournal === "all" || article.journal === selectedJournal;
+                return matchesQuery && matchesYear && matchesCategory && matchesJournal;
+            });
+
+            // Sorter block pipeline configurations operations mappings
+            if (sortOrder === "newest") {
+                results.sort((a, b) => b.year - a.year);
+            } else if (sortOrder === "oldest") {
+                results.sort((a, b) => a.year - b.year);
+            }
+
+            // Render Output Target Template Nodes Generation Structural Framework UI Node Generation Layouts
+            const container = document.getElementById("searchResultsContainer");
+            document.getElementById("searchMetaSummary").innerText = `Found ${results.length} matching record item files in engine matrix cluster`;
+
+            if (results.length === 0) {
+                container.innerHTML = `
+                    <div class="p-12 text-center bg-white dark:bg-slate-900 border border-stone-200 dark:border-slate-800 rounded-lg">
+                        <i class="fa-solid fa-folder-open text-4xl text-stone-300 mb-2"></i>
+                        <p class="text-sm font-medium text-stone-500">No archival matches found matching parameters definitions.</p>
+                    </div>
+                `;
+                return;
+            }
+
+            container.innerHTML = results.map(art => {
+                const isBookmarked = bookmarkedIds.includes(art.id);
+                // Highlight matches strings highlights parsing logic processing patterns layout
+                let titleRender = art.title;
+                let snippetRender = art.snippet;
+                if (query) {
+                    const regex = new RegExp(`(${query})`, 'gi');
+                    titleRender = titleRender.replace(regex, `<span class="keyword-highlight">$1</span>`);
+                    snippetRender = snippetRender.replace(regex, `<span class="keyword-highlight">$1</span>`);
+                }
+
+                return `
+                    <div class="bg-white dark:bg-slate-900 p-5 rounded-lg border border-stone-300 dark:border-slate-800 shadow-sm hover:shadow-md transition flex flex-col justify-between gap-4">
+                        <div>
+                            <div class="flex items-center justify-between text-xs text-amber-800 dark:text-amber-500 font-bold uppercase tracking-wider mb-1">
+                                <span>${art.journal} — ${art.category}</span>
+                                <button onclick="toggleBookmarkTargetNode(${art.id})" class="text-stone-400 hover:text-amber-700 text-sm">
+                                    <i class="${isBookmarked ? 'fa-solid text-amber-700' : 'fa-regular'} fa-bookmark"></i>
+                                </button>
+                            </div>
+                            <h3 class="font-serif font-bold text-xl text-stone-900 dark:text-white mb-2 cursor-pointer hover:underline" onclick="launchArticleViewerNode(${art.id})">
+                                ${titleRender}
+                            </h3>
+                            <p class="text-xs text-stone-500 dark:text-slate-400 mb-3">Published: <strong>${art.date}</strong> | Author: <strong>${art.author}</strong></p>
+                            <p class="text-sm text-stone-600 dark:text-slate-300 leading-relaxed font-serif bg-stone-50 dark:bg-slate-950 p-3 rounded border-l-2 border-stone-400 italic">
+                                ${snippetRender}
+                            </p>
+                        </div>
+                        <div class="flex justify-end pt-2 border-t border-stone-100 dark:border-slate-800">
+                            <button onclick="launchArticleViewerNode(${art.id})" class="text-xs font-bold uppercase tracking-widest text-stone-900 dark:text-amber-500 hover:underline">
+                                Inspect Full OCR Transcript <i class="fa-solid fa-arrow-right ml-1"></i>
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }).join("");
+        }
+
+        // Reset Filter elements properties parameters fields attributes configurations updates values state values
+        function resetFilters() {
+            document.getElementById("filterYearMin").value = "";
+            document.getElementById("filterYearMax").value = "";
+            document.getElementById("filterCategory").value = "all";
+            document.getElementById("filterJournal").value = "all";
+            searchEngine();
+        }
+
+        // Bookmark Actions Processing Logic Controller Array Triggers Data Modifications Data Structures
+        function toggleBookmarkTargetNode(id) {
+            if (bookmarkedIds.includes(id)) {
+                bookmarkedIds = bookmarkedIds.filter(item => item !== id);
+            } else {
+                bookmarkedIds.push(id);
+            }
+            renderBookmarksWidgetListView();
+            searchEngine();
+        }
+
+        function renderBookmarksWidgetListView() {
+            document.getElementById("bookmarkCount").innerText = bookmarkedIds.length;
+            const list = document.getElementById("bookmarksWidgetList");
+            if (bookmarkedIds.length === 0) {
+                list.innerHTML = `<li class="text-stone-400 italic">No saved articles logged.</li>`;
+                return;
+            }
+            const items = mockArticlesDatabase.filter(a => bookmarkedIds.includes(a.id));
+            list.innerHTML = items.map(i => `
+                <li class="border-b border-stone-100 dark:border-slate-800 pb-1 flex justify-between items-center">
+                    <span onclick="launchArticleViewerNode(${i.id})" class="cursor-pointer hover:underline text-stone-700 dark:text-slate-300 truncate pr-2 block max-w-[150px]">${i.title}</span>
+                    <button onclick="toggleBookmarkTargetNode(${i.id})" class="text-red-700 font-bold"><i class="fa-solid fa-trash-can text-[10px]"></i></button>
+                </li>
+            `).join("");
+        }
+
+        function renderSearchHistoryViewList() {
+            const container = document.getElementById("searchHistoryList");
+            if(searchHistory.length === 0) {
+                container.innerHTML = `<li class="text-stone-400 italic">History stack clear empty.</li>`;
+                return;
+            }
+            container.innerHTML = searchHistory.slice(0, 5).map(h => `
+                <li class="cursor-pointer hover:text-amber-700 truncate" onclick="document.getElementById('archiveSearchInput').value='${h}'; searchEngine();">
+                    <i class="fa-solid fa-clock-rotate-left mr-1.5 opacity-60"></i> ${h}
+                </li>
+            `).join("");
+        }
+
+        // View Node Active Inspection Launcher Dynamic Page Generator Bindings Controller Module Setup
+        function launchArticleViewerNode(articleId) {
+            const article = mockArticlesDatabase.find(a => a.id === articleId);
+            if(!article) return;
+
+            document.getElementById("view-article-title").innerText = article.title;
+            document.getElementById("view-article-journal").innerText = article.journal;
+            document.getElementById("view-article-date").innerText = article.date;
+            document.getElementById("view-article-author").innerText = article.author;
+            document.getElementById("view-article-category").innerText = article.category;
+
+            // Extract highlighted matches parsing structures to inspect
+            const query = document.getElementById("archiveSearchInput").value.trim().toLowerCase();
+            let paragraphs = article.body.split("\n\n").map(p => p.trim()).filter(Boolean);
+            if (paragraphs.length === 0) paragraphs = [article.body];
+
+            let bodyHtmlHTML = paragraphs.map(p => {
+                let textText = p;
+                if (query) {
+                    const regex = new RegExp(`(${query})`, 'gi');
+                    textText = textText.replace(regex, `<span class="keyword-highlight">$1</span>`);
+                }
+                return `<p class="indent-8 text-justify font-serif tracking-normal leading-relaxed text-base mb-4 text-stone-800 dark:text-slate-300">${textText}</p>`;
+            }).join("");
+
+            document.getElementById("view-article-body").innerHTML = bodyHtmlHTML;
+            
+            // Reset scale layout factor defaults views sizes
+            currentViewerZoomFactor = 1.0;
+            document.getElementById("view-article-body").style.transform = `scale(${currentViewerZoomFactor})`;
+
+            navigateTo("viewer");
+        }
+
+        function adjustViewerZoom(value) {
+            currentViewerZoomFactor += value;
+            if(currentViewerZoomFactor < 0.6) currentViewerZoomFactor = 0.6;
+            if(currentViewerZoomFactor > 1.8) currentViewerZoomFactor = 1.8;
+            document.getElementById("view-article-body").style.transform = `scale(${currentViewerZoomFactor})`;
+        }
+
+        function triggerMockDownloadPDF() {
+            alert("Generating OCR High-Fidelity PDF Asset Archive Manifest Document Package...\n\nDocument downloaded saved locally as manifest.pdf successfully.");
+        }
+
+        // Admin Dashboard Simulator Database Mutators Inputs Action Workers handlers entries items data logs
+        function handleArchiveUpload(event) {
+            event.preventDefault();
+            const title = document.getElementById("adminTitle").value.trim();
+            const year = parseInt(document.getElementById("adminYear").value.trim());
+            const cat = document.getElementById("adminCategory").value.trim();
+            const body = document.getElementById("adminBody").value.trim();
+
+            const newArt = {
+                id: mockArticlesDatabase.length + 1,
+                title: title,
+                date: `June 12, ${year}`,
+                year: year,
+                journal: "The Daily Chronicle",
+                category: cat,
+                author: "System Admin Upload Ingestion",
+                body: body,
+                snippet: body.substring(0, 120) + "..."
+            };
+
+            mockArticlesDatabase.push(newArt);
+            alert("New file data row committed successfully to system registry cluster.");
+            closeModal("adminModal");
+            
+            // Reset tracking numbers counts views displays summaries dashboards parameters nodes targets updating states
+            document.getElementById("stat-total-docs").innerText = (142850 + mockArticlesDatabase.length - 3).toLocaleString();
+            searchEngine();
+        }
+
+        function handleAuthSubmit(event) {
+            event.preventDefault();
+            alert("Authentication token generated successfully. Logged in session dashboard state configured active.");
+            closeModal("authModal");
+        }
+
+        function handleContactSubmit(event) {
+            event.preventDefault();
+            alert("Contact Support Request Ticket logged cleanly inside database datastore clusters pipelines. Team members notification alert fires.");
+            document.getElementById("contactForm").reset();
+        }
+
+        // ANALYTICS DATA DASHBOARD ENGINE IMPLEMENTATION CODE CHARTJS HOOK CODES CONFIGURATION
+        function initChartsJSVisualizers() {
+            // Chart 1 Logic Processing (Line Configuration Properties Node Matrix Mapping)
+            const ctxTrends = document.getElementById('keywordTrendsChart').getContext('2d');
+            new Chart(ctxTrends, {
+                type: 'line',
+                data: {
+                    labels: ['1950', '1970', '1990', '2010', '2026'],
+                    datasets: [
+                        {
+                            label: 'Space Exploration Queries',
+                            data: [120, 890, 450, 310, 720],
+                            borderColor: '#b45309',
+                            backgroundColor: 'transparent',
+                            tension: 0.3
+                        },
+                        {
+                            label: 'Computational Science Freq',
+                            data: [10, 140, 980, 1420, 2100],
+                            borderColor: '#0f766e',
+                            backgroundColor: 'transparent',
+                            tension: 0.3
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { labels: { font: { family: 'Inter' } } } }
+                }
+            });
+
+            // Chart 2 Logic Processing (Pie Classification Density Layout Structures Graphs)
+            const ctxDist = document.getElementById('categoryDistributionChart').getContext('2d');
+            new Chart(ctxDist, {
+                type: 'doughnut',
+                data: {
+                    labels: ['Politics', 'Science & Tech', 'World News', 'Space Arch'],
+                    datasets: [{
+                        data: [45, 25, 20, 10],
+                        backgroundColor: ['#78350f', '#064e3b', '#1e3a8a', '#581c87']
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { position: 'bottom', labels: { font: { family: 'Inter' } } } }
+                }
+            });
+        }
+    </script>
+</body>
+</html>
